@@ -113,7 +113,7 @@ The 'rule[Code]' section would be duplicated in the response per rule execution.
 
 ```xml
 
-<xml version="1.0"?>
+<xml version="1.0">
 <data>
     <debug>
         <trace-id>2314-5641-sdf2-2344dfdf</trace-id>
