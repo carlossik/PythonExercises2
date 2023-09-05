@@ -61,20 +61,20 @@ Where the data must obey the following conditions:
     "data": {
         "product_name": "<String>",
         "product_type": "<String>",
-        "product_version": <Float>,
+        "product_version": ",<Float>"
     },
     "additional": {
         "overall": {
-            "duration": <Float>,
+            "duration": "<Float>",
             "result": "<String>"
         },
         "decisions": [
             {
                 "rule[Code]": {
-                    "duration": <Float>,
+                    "duration":" <Float>",
                     "result": "<String>"
-                },
-                ...
+                }
+              
             }
         ]
     }
