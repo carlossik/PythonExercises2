@@ -9,7 +9,7 @@ from xml.etree import ElementTree as ET
 from server.test.conftest import determine_overall_decision
 
 
-# from server.test.conftest import get_xml, parse_xml, xml_endpoint_url, send_request
+from server.test.conftest import get_xml, xml_endpoint_url, send_request
 
 
 class TestXmlEndpoint:
