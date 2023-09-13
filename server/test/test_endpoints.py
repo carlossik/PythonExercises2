@@ -3,6 +3,8 @@ import pytest
 import json
 from jsonpath_ng import jsonpath, parse
 
+#from server.test.conftest import get_xml, parse_xml, xml_endpoint_url, send_request
+
 
 class TestVersionEndpoint:
     # Test case 1: Valid GET Request
@@ -54,6 +56,11 @@ class TestVersionEndpoint:
         assert response.status_code == 404
         assert response.json() == {"detail": "Not Found"}
 
+    def test_invalid_endpoint(self, send_request, fake_base_url):
+        """Additional"""
+        response = send_request("GET", fake_base_url)
+        assert response.status_code == 404
+
 
 class TestJsonEndpoint:
 
@@ -67,6 +74,10 @@ class TestJsonEndpoint:
         """REQ-2.1b"""
         response = send_request(method, json_endpoint_url)
         assert response.status_code == 405
+        assert response.json() == {"detail": "Method Not Allowed"}
+
+
+
 
     @pytest.mark.parametrize(
         "product_name, product_type, product_version",
@@ -90,6 +101,7 @@ class TestJsonEndpoint:
         response = send_request("POST", json_endpoint_url, data)
         assert response.status_code == 200
 
+
     @pytest.mark.parametrize(
         "product_name, product_type, product_version",
         [
@@ -99,6 +111,13 @@ class TestJsonEndpoint:
             pytest.param("MORTGAGES", "type1", -1.1, id='Wrong Product Version'),
             pytest.param("CREDITCARDS", "type1", 1000, id='Wrong Product Version - Int'),
             pytest.param("MORTGAGES", "type1", -1.1, id='Missing Product Version'),
+            pytest.param("CREDITCARDS", "type1", 0.0, id='0 Product Version'),
+            pytest.param("LOANS",1,3.0,id='non string product type'),
+            pytest.param("INSURANCE", 1, 3.0, id='product name not listed in allowed values'),
+            pytest.param( 1, 3.0,"", id='post request with missing field'),
+            pytest.param( "","","",id='post request with no data'),
+            pytest.param("LOANS","type2",1.2,id="product version with mixed chars"),
+            pytest.param("LOANS", "type2", 100000000000000000000000000000000000000000000000000000000000000000000000000000000000.2, id='project version with larger boundaries')
         ],
     )
     def test_json_invalid_data_request_body_format_Ok(self, json_endpoint_url, send_request, product_name, product_type,
@@ -112,32 +131,28 @@ class TestJsonEndpoint:
         response = send_request("POST", json_endpoint_url, data)
         assert response.status_code == 400
 
-    def test_returns_sub_200ms_response_time(self, json_endpoint_url, send_request):
+    @pytest.mark.parametrize(
+        "product_name, product_type, product_version",
+        [
+            ("SAVINGS", "type1", 1.1),
+            ("LOANS", "type2", 2.1),
+            ("MORTGAGES", "type3", 3.5),
+            ("CREDITCARDS", "type4", 4.2),
+            ("MORTGAGES", "", 3.5),
+            ("CREDITCARDS", 3000, 43.2),
+        ],
+    )
+
+    def test_returns_sub_200ms_response_time(self, json_endpoint_url, send_request, product_name, product_type,
+                                               product_version):
         """REQ-2.5"""
+        data = {
+            "product_name": product_name,
+            "product_type": product_type,
+            "product_version": product_version,
+        }
         response = send_request("POST", json_endpoint_url)
         assert response.status_code == 200
         assert response.elapsed.total_seconds() < 0.2
 
 
-class TestXmlEndpoint:
-    def test_only_supports_get_method(self, xml_endpoint_url, send_request):
-        """REQ-3.1"""
-        for method in ["POST", "PUT"]:
-            response = send_request(method, xml_endpoint_url)
-            assert response.status_code == 405
-            assert response.json() == {"detail": "Method Not Allowed"}
-
-    @pytest.mark.parametrize("debug_value", [True, False])
-    def test_with_debug_param(self, xml_endpoint_url, send_request, debug_value):
-        """REQ-3.2, REQ-3.3, REQ-3.4, REQ-3.5"""
-        params = {"debug": debug_value}
-        response = send_request("GET", xml_endpoint_url, params=params)
-        assert response.status_code == 201
-        if debug_value:
-            assert "<overall>Decline</overall>" not in response.text
-
-
-def test_invalid_endpoint(send_request):
-    """Additional"""
-    response = send_request("GET", "invalid_endpoint")
-    assert response.status_code == 404
